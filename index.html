@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ภารกิจนักเรียนรู้ | LEARNER QUEST</title>
+<style>
+:root{--a:#c2410c;--b:#f59e0b;--bg:#fff7ed;--ink:#2b2118}*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Sans Thai",sans-serif;background:linear-gradient(135deg,#fff7ed,#fef3c7);color:var(--ink)}.wrap{max-width:1100px;margin:auto;padding:18px}.hero{background:linear-gradient(135deg,#7c2d12,#ea580c,#f59e0b);color:#fff;border-radius:28px;padding:28px;box-shadow:0 12px 30px #7c2d1230}.hero h1{font-size:clamp(34px,6vw,60px);margin:0}.hero p{font-size:18px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.card{background:#fff;border-radius:22px;padding:22px;margin-top:18px;box-shadow:0 8px 24px #7c2d1218}label{font-weight:800}input,select,textarea{width:100%;padding:13px;margin-top:7px;border:2px solid #fed7aa;border-radius:14px;font-size:16px}textarea{min-height:120px}button{border:0;border-radius:14px;padding:13px 18px;font-weight:800;font-size:16px;cursor:pointer}.primary{background:var(--a);color:white}.soft{background:#ffedd5;color:#9a3412}.quest{border:2px solid #fed7aa;border-radius:20px;padding:18px;margin:14px 0}.xp{font-size:28px;font-weight:900}.bar{height:14px;background:#ffedd5;border-radius:20px;overflow:hidden}.fill{height:100%;width:0;background:linear-gradient(90deg,#fbbf24,#ea580c);transition:.4s}.badge{display:inline-block;padding:6px 11px;border-radius:99px;background:#fef3c7;color:#92400e;font-weight:800}.wall{border-left:5px solid #f59e0b;background:#fff7ed;border-radius:12px;padding:12px;margin:10px 0}.hidden{display:none}.row{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap}.muted{color:#73543e}.ok{color:#15803d;font-weight:800}.err{color:#b91c1c;font-weight:800}.small{font-size:13px}
+</style></head><body><div class="wrap">
+<section class="hero"><div class="row"><div><h1>🎮 ภารกิจนักเรียนรู้</h1><p>LEARNER QUEST • คิด • ค้นพบ • สะท้อน • แบ่งปัน • นำไปใช้</p></div><div class="xp">⭐ <span id="xp">0</span> XP</div></div><div class="bar"><div id="fill" class="fill"></div></div></section>
+
+<section id="login" class="card"><h2>👤 เข้าร่วมภารกิจ</h2><div class="grid">
+<div><label>ชื่อผู้เรียน</label><input id="name" placeholder="ชื่อเล่นหรือชื่อผู้เรียน"></div>
+<div><label>สกร.ระดับตำบล</label><input id="tambon" placeholder="เช่น สกร.ระดับตำบลโนนสูง"></div>
+<div><label>ระดับ</label><select id="level"><option>ประถมศึกษา</option><option>มัธยมศึกษาตอนต้น</option><option>มัธยมศึกษาตอนปลาย</option></select></div>
+</div><br><button class="primary" onclick="start()">🚀 เริ่มภารกิจ</button><p id="msg" class="small"></p></section>
+
+<section id="game" class="card hidden"><div class="row"><h2>🗺️ แผนที่ภารกิจ</h2><button class="soft" onclick="wall()">💬 Learning Wall</button></div><div id="quests"></div></section>
+<section id="wall" class="card hidden"><div class="row"><h2>💬 Learning Wall</h2><button class="soft" onclick="back()">← กลับเกม</button></div><div id="wallList"></div></section>
+</div>
+<script>
+const API_URL="https://script.google.com/macros/s/AKfycbyVaulBJqyuBEiPfAB62eypHKyR271JhZ1YJKImo9yqFLqlQkk99bxNRE_pLCuWGa-UDA/exec";
+const qs=[
+["🌱","ภารกิจ 01 • เริ่มต้นการเรียนรู้","วันนี้ฉันมาเรียนด้วยความรู้สึกอย่างไร?",10],
+["🔍","ภารกิจ 02 • นักค้นพบ","วันนี้ฉันค้นพบอะไรใหม่?",20],
+["💡","ภารกิจ 03 • นักคิด","สิ่งที่ฉันเรียนรู้ มีความสำคัญอย่างไร?",20],
+["🎤","ภารกิจ 04 • นักเล่า","ถ้าให้ฉันเล่าเรื่องนี้ให้เพื่อนฟัง ฉันจะเล่าว่าอย่างไร?",25],
+["🚀","ภารกิจ 05 • นักนำไปใช้","ฉันจะนำสิ่งที่เรียนรู้ไปใช้ในชีวิตจริงอย่างไร?",25]];
+let S=JSON.parse(localStorage.getItem("LQ_STATE")||'{"xp":0,"done":[],"answers":[]}');
+let P=JSON.parse(localStorage.getItem("LQ_PROFILE")||"null");
+function start(){let n=name.value.trim(),t=tambon.value.trim();if(!n||!t){msg.textContent="กรุณากรอกชื่อและ สกร.ระดับตำบล";msg.className="err";return}P={name:n,tambon:t,level:level.value};localStorage.setItem("LQ_PROFILE",JSON.stringify(P));login.classList.add("hidden");game.classList.remove("hidden");render();update();loadWall()}
+function render(){quests.innerHTML=qs.map((q,i)=>{let d=S.done.includes(i);return `<div class="quest"><h3>${q[0]} ${q[1]} <span class="badge">+${q[3]} XP</span></h3><p>${q[2]}</p>${d?'<div class="ok">✅ ทำภารกิจแล้ว</div>':`<textarea id="a${i}" placeholder="เขียนคำตอบของฉัน..."></textarea><br><button class="primary" onclick="submitQ(${i})">ส่งภารกิจ 🚀</button>`}</div>`}).join("")}
+function submitQ(i){let a=document.getElementById("a"+i).value.trim();if(!a){alert("กรุณาเขียนคำตอบ");return}let item={name:P.name,tambon:P.tambon,level:P.level,quest:qs[i][1],answer:a,xp:qs[i][3]};S.done.push(i);S.xp+=qs[i][3];S.answers.push(item);localStorage.setItem("LQ_STATE",JSON.stringify(S));send(item);render();update();loadWall();if(S.xp>=100)alert("🏆 MASTER LEARNER! คุณทำครบ 100 XP แล้ว")}
+function update(){xp.textContent=S.xp;fill.style.width=Math.min(S.xp,100)+"%"}
+function send(item){if(!API_URL||API_URL.includes("__API_URL__"))return;fetch(API_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"save",data:item})}).then(()=>msg.textContent="บันทึกข้อมูลออนไลน์แล้ว").catch(()=>{})}
+function loadWall(){let a=S.answers.slice().reverse();wallList.innerHTML=a.length?a.map(x=>`<div class="wall"><b>${esc(x.name)}</b> · ${esc(x.tambon)}<br>${esc(x.answer)}<div class="small muted">${esc(x.quest)}</div></div>`).join(""):"ยังไม่มีคำตอบในเครื่องนี้"}
+function wall(){game.classList.add("hidden");wall.classList.remove("hidden");loadWall()}function back(){wall.classList.add("hidden");game.classList.remove("hidden")}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+if(P){name.value=P.name;tambon.value=P.tambon;level.value=P.level;login.classList.add("hidden");game.classList.remove("hidden");render();update();loadWall()}
+</script></body></html>
